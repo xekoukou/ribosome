@@ -495,6 +495,8 @@ try {
     process.exit(1);
 }
 
+var dotbase = 0;
+var removed_ndots = -1;
 dnastack.push([file.split(eol), dnafile, 0, dirname]);
 
 while (dnastack.length > 1) {
@@ -508,93 +510,120 @@ while (dnastack.length > 1) {
     }
 
 
-    if ((line.length == 0) || (line[0] != ".")) {
+    if ((line.length == 0) || ((line[0] != ".") && (dotbase == 0))) {
         rnawrite(line + '\n');
         continue;
     }
 
-    line = line.slice(1);
-
-    if (line.slice(-1) == "$") {
-        line = line.slice(0, -1);
-    }
-
-    if (line.indexOf("\t") != -1) {
-        dnaerror("tab found in the line, replace it by space");
-    }
-
-    var firsttwo = line.trim().slice(0, 2);
-
-    if (firsttwo == "/+") {
-        rnawrite("ribosome.add('" + addslashes((line + 'w').trim().slice(2, -1)) + "',function(_expr){return eval(_expr);});\n");
+    if(line.indexOf("./!dots") == 0 ) {
+        var ndots = parseInt(line.split("(")[1].split(")")[0]);
+	if (isNaN(ndots)) {
+            dnaerror("dots has been specified with a parameter that is not a number");
+	}
+	dotbase +=ndots;
+	if(dotbase < 0) {
+            dnaerror("dots command led to a negative dotbase");
+	}
+	if(dotbase != 0) {
+	    var nndots = ndots + removed_ndots;
+	    if (nndots != 0) {
+                rnawrite('ribosome.dot("' + addslashes('./!dots(' + nndots + ')') + '",function(_expr){return eval(_expr);})\n');
+	    }
+	    removed_ndots = 0;
+	} else {
+	    if (ndots+1 != 0) {
+                rnawrite('ribosome.dot("' + addslashes('./!dots(' + (ndots+1) + ')') + '",function(_expr){return eval(_expr);})\n');
+	    }
+	    removed_ndots = -1;
+        }
         continue;
     }
 
-    if (firsttwo == "/=") {
-        rnawrite("ribosome.align('" + addslashes((line + 'w').trim().slice(2, -1)) + "',function(_expr){return eval(_expr);});\n");
-        continue;
-    }
+    if(dotbase == 0) {
 
-    if (firsttwo == "/!") {
-        line = (line + 'w').trim().slice(2, -1);
-        var match = line.match(/^[0-9A-Za-z_]+/);
-        if (match == null) {
-            dnaerror("/! should be followed by an identifier");
+        line = line.slice(1);
+
+        if (line.slice(-1) == "$") {
+            line = line.slice(0, -1);
         }
 
-        var command = match[0];
+        if (line.indexOf("\t") != -1) {
+            dnaerror("tab found in the line, replace it by space");
+        }
 
-        if (["output", "append", "stdout", "tabsize"].indexOf(command) >= 0) {
-            rnawrite("ribosome." + line + "\n");
+        var firsttwo = line.trim().slice(0, 2);
+
+        if (firsttwo == "/+") {
+            rnawrite("ribosome.add('" + addslashes((line + 'w').trim().slice(2, -1)) + "',function(_expr){return eval(_expr);});\n");
             continue;
         }
 
-        if (command == "separate") {
-            var separator = line.match(/["'].*["']/);
-            if (separator == null) {
-                dnaerror("Bad command syntax");
-            }
-            separator = separator[0].slice(1, -1);
-            var cname = "___separate_" + rnaln + "___";
-            rnawrite("var " + cname + " = true;\n");
-            line = dnastack.last()[0][0];
-            dnastack.last()[0].shift();
-            dnastack.last()[2] += 1;
-            if (line == null || line[0] == "." ||
-                (!line.indexOf("while") && !line.indexOf("for"))) {
-                dnaerror("'separate' command must be followed by a loop.");
-            }
-
-            rnawrite(line);
-            rnawrite("\nif(" + cname + ") {\n")
-            rnawrite("    " + cname + " = false;\n")
-            rnawrite("} else {\n")
-            rnawrite("    ribosome.add('" + addslashes(separator) + "',function(_expr){return eval(_expr);});\n")
-            rnawrite("}\n")
-            continue;
-
-        }
-        if (command == "include") {
-            var filename = line.match(/["'].*["']/);
-            if (filename == null) {
-                dnaerror("Bad command syntax");
-            }
-            filename = filename[0].slice(1, -1).trim();
-            filename = path.normalize(path.join(dnastack.last()[3], filename));
-            var dirname = path.dirname(filename);
-
-            var file;
-            try {
-                file = fs.readFileSync(filename, "utf8");
-            } catch (e) {
-                dnaerror("File doesn't exist.");
-            }
-            dnastack.push([file.split(eol), filename, 0, dirname]);
+        if (firsttwo == "/=") {
+            rnawrite("ribosome.align('" + addslashes((line + 'w').trim().slice(2, -1)) + "',function(_expr){return eval(_expr);});\n");
             continue;
         }
 
-        dnaerror("Unknown command " + command);
+        if (firsttwo == "/!") {
+            line = (line + 'w').trim().slice(2, -1);
+            var match = line.match(/^[0-9A-Za-z_]+/);
+            if (match == null) {
+                dnaerror("/! should be followed by an identifier");
+            }
 
+            var command = match[0];
+
+            if (["output", "append", "stdout", "tabsize"].indexOf(command) >= 0) {
+                rnawrite("ribosome." + line + "\n");
+                continue;
+            }
+
+            if (command == "separate") {
+                var separator = line.match(/["'].*["']/);
+                if (separator == null) {
+                    dnaerror("Bad command syntax");
+                }
+                separator = separator[0].slice(1, -1);
+                var cname = "___separate_" + rnaln + "___";
+                rnawrite("var " + cname + " = true;\n");
+                line = dnastack.last()[0][0];
+                dnastack.last()[0].shift();
+                dnastack.last()[2] += 1;
+                if (line == null || line[0] == "." ||
+                    (!line.indexOf("while") && !line.indexOf("for"))) {
+                    dnaerror("'separate' command must be followed by a loop.");
+                }
+
+                rnawrite(line);
+                rnawrite("\nif(" + cname + ") {\n")
+                rnawrite("    " + cname + " = false;\n")
+                rnawrite("} else {\n")
+                rnawrite("    ribosome.add('" + addslashes(separator) + "',function(_expr){return eval(_expr);});\n")
+                rnawrite("}\n")
+                continue;
+
+            }
+            if (command == "include") {
+                var filename = line.match(/["'].*["']/);
+                if (filename == null) {
+                    dnaerror("Bad command syntax");
+                }
+                filename = filename[0].slice(1, -1).trim();
+                filename = path.normalize(path.join(dnastack.last()[3], filename));
+                var dirname = path.dirname(filename);
+
+                var file;
+                try {
+                    file = fs.readFileSync(filename, "utf8");
+                } catch (e) {
+                    dnaerror("File doesn't exist.");
+                }
+                dnastack.push([file.split(eol), filename, 0, dirname]);
+                continue;
+            }
+
+            dnaerror("Unknown command " + command);
+
+        }
     }
 
     rnawrite('ribosome.dot("' + addslashes(line) + '",function(_expr){return eval(_expr);})\n');

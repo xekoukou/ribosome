@@ -1,0 +1,25 @@
+./!dots(2)
+
+for(var i = 0; i<3; i++) {
+.Third level
+}
+
+./!dots(-1)
+
+for(var i = 0; i<3; i++) {
+..Second level
+}
+
+./!dots(1)
+
+for(var i = 0; i<3; i++) {
+.Third level
+}
+
+./!dots(-2)
+
+for(var i = 0; i<3; i++) {
+...First level
+}
+
+
