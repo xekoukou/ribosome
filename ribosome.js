@@ -226,6 +226,15 @@ function Ribosome() {\n\
         ];\n\
     }\n\
 \n\
+    this.pass = pass;\n\
+\n\
+    function pass(line) {\n\
+\n\
+        var block = new Block('');\n\
+        stack.last().push(block);\n\
+        block.add_right(new Block(line.slice()));\n\
+    }\n\
+\n\
     this.add = add;\n\
 \n\
     function add(line, leval) {\n\
@@ -539,8 +548,9 @@ while (dnastack.length > 1) {
         continue;
     }
 
-    if(dotbase == 0) {
-
+    if(dotbase != 0) {
+        rnawrite('ribosome.pass("' + addslashes(line) + '")\n');
+    } else {
         line = line.slice(1);
 
         if (line.slice(-1) == "$") {
@@ -624,9 +634,8 @@ while (dnastack.length > 1) {
             dnaerror("Unknown command " + command);
 
         }
+        rnawrite('ribosome.dot("' + addslashes(line) + '",function(_expr){return eval(_expr);})\n');
     }
-
-    rnawrite('ribosome.dot("' + addslashes(line) + '",function(_expr){return eval(_expr);})\n');
 }
 
 
