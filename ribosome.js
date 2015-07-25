@@ -1,4 +1,4 @@
-#!/usr/bin/env nodejs
+#!/usr/bin/env node
 
 /*
 
@@ -24,7 +24,7 @@
 
 */
 
-var PROLOGUE = "#!/usr/bin/env nodejs\n\
+var PROLOGUE = "#!/usr/bin/env node\n\
 \n\
 /*\n\
 \n\
@@ -399,7 +399,7 @@ var slash = \"/\";\n\
 \n\
 ///////////////////////////////////////////////////////////////////////\n\
 //\n\
-//  The code that belongs to the protein project ends at this point of the\n\
+//  The code that belongs to the ribosome project ends at this point of the\n\
 //  RNA file and so does the associated license. What follows is the code\n\
 //  generated from the DNA file.\n\
 //\n\
@@ -414,6 +414,7 @@ Array.prototype.last = function() {
 var fs = require('fs');
 var path = require('path');
 var exec = require('child_process').exec;
+var execSync = require('child_process').execSync;
 
 
 function addslashes(str) {
@@ -630,6 +631,39 @@ while (dnastack.length > 1) {
                 dnastack.push([file.split(eol), filename, 0, dirname]);
                 continue;
             }
+	    if (command == "exec") {
+                var filename = line.split(/["']/)[1];
+                if (filename == null) {
+                    dnaerror("Bad command syntax");
+                }
+                filename = filename.trim();
+                filename = path.normalize(path.join(dnastack.last()[3], filename));
+                var dirname = path.dirname(filename);
+                 
+                var args = line.match(/\[[^\[\]]*\]/g);
+                if (args == null) {
+                    dnaerror("Bad command syntax");
+                }
+	        var lfilename = "./" + filename;
+		for( var i=0; i < args.length; i++) {
+                    var largs = args[i].slice(1,-1).split(",");
+                   
+		    try { 
+		        fs.unlinkSync(lfilename + "result." + i);
+		    } catch(e) {}
+                    execSync("ribosome.js " + lfilename + " " +  largs.join(" ") + " > " + "./" +filename + ".result."+i);
+		    lfilename = "./" + filename + ".result." + i;
+		}
+                var file;
+                try {
+                    file = fs.readFileSync(lfilename, "utf8");
+                } catch (e) {
+                    dnaerror("File doesn't exist.");
+                }
+                dnastack.push([file.split(eol), filename, 0, dirname]);
+		fs.unlinkSync(lfilename);
+                continue;
+	    }
 
             dnaerror("Unknown command " + command);
 
@@ -668,17 +702,10 @@ if (rnaopt) {
 }
 
 if (!rnaopt) {
-    exec("nodejs " + rnafile + " " + process.argv.slice(3).join(' '), function(error, stdout, stderr) {
-        if(stderr != "") {
-            exec("node " + rnafile + " " + process.argv.slice(3).join(' '), function(error, stdout, stderr) {
-                process.stdout.write(stdout);
-                process.stdout.write(stderr);
-                fs.unlinkSync(rnafile);
-            });
-        } else {
-            process.stdout.write(stdout);
-            fs.unlinkSync(rnafile);
-        }
+    exec("node " + rnafile + " " + process.argv.slice(3).join(' '), function(error, stdout, stderr) {
+        process.stdout.write(stdout);
+        process.stdout.write(stderr);
+        fs.unlinkSync(rnafile);
     });
 }
 
