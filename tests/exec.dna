@@ -1,4 +1,0 @@
-./!exec("./exec2.dna",[],["Hello"])
-
-
-.@{word}

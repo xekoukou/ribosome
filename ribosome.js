@@ -648,10 +648,10 @@ while (dnastack.length > 1) {
 		for( var i=0; i < args.length; i++) {
                     var largs = args[i].slice(1,-1).split(",");
                    
-		    try { 
-		        fs.unlinkSync(lfilename + "result." + i);
-		    } catch(e) {}
                     execSync("ribosome.js " + lfilename + " " +  largs.join(" ") + " > " + "./" +filename + ".result."+i);
+		    try { 
+		        fs.unlinkSync("./" + filename + ".result." + (i-1));
+		    } catch(e) {}
 		    lfilename = "./" + filename + ".result." + i;
 		}
                 var file;
