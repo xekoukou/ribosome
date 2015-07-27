@@ -520,7 +520,7 @@ while (dnastack.length > 1) {
     }
 
 
-    if ((line.length == 0) || ((line[0] != ".") && (dotbase == 0))) {
+    if (((line.length == 0) || (line[0] != ".")) && (dotbase == 0)) {
         rnawrite(line + '\n');
         continue;
     }
