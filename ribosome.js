@@ -647,8 +647,12 @@ while (dnastack.length > 1) {
 	        var lfilename = "./" + filename;
 		for( var i=0; i < args.length; i++) {
                     var largs = args[i].slice(1,-1).split(",");
-                   
-                    execSync("ribosome.js " + lfilename + " " +  largs.join(" ") + " > " + "./" +filename + ".result."+i);
+                    
+		    try {
+                    execSync("ribosome.js " + lfilename + " " +  largs.join(" ") + " 1> " + "./" +filename + ".result."+i);
+		    } catch(e) {
+                    process.exit(-1);
+		    }
 		    try { 
 		        fs.unlinkSync("./" + filename + ".result." + (i-1));
 		    } catch(e) {}
