@@ -649,14 +649,14 @@ while (dnastack.length > 1) {
                     var largs = args[i].slice(1,-1).split(",");
                     
 		    try {
-                    execSync("ribosome.js " + lfilename + " " +  largs.join(" ") + " 1> " + "./" +filename + ".result."+i);
+                        execSync("ribosome.js " + lfilename + " " +  largs.join(" ") + " 1> " + "./" +filename + ".result."+i+".dna");
 		    } catch(e) {
-                    process.exit(-1);
+                        process.exit(-1);
 		    }
 		    try { 
-		        fs.unlinkSync("./" + filename + ".result." + (i-1));
+		        fs.unlinkSync("./" + filename + ".result." + (i-1)+".dna");
 		    } catch(e) {}
-		    lfilename = "./" + filename + ".result." + i;
+		    lfilename = "./" + filename + ".result." + i+".dna";
 		}
                 var file;
                 try {
@@ -664,8 +664,7 @@ while (dnastack.length > 1) {
                 } catch (e) {
                     dnaerror("File doesn't exist.");
                 }
-                dnastack.push([file.split(eol), filename, 0, dirname]);
-		fs.unlinkSync(lfilename);
+                dnastack.push([file.split(eol), lfilename, 0, dirname]);
                 continue;
 	    }
 
