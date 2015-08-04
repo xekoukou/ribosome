@@ -649,14 +649,14 @@ while (dnastack.length > 1) {
                     var largs = args[i].slice(1,-1).split(",");
                     
 		    try {
-                        execSync("ribosome.js " + lfilename + " " +  largs.join(" ") + " 1> " + "./" +filename + ".result."+i+".dna");
+                        execSync("ribosome.js " + lfilename + " " +  largs.join(" ") + " 1> " + "./" +filename + ".result."+i+".js.dna");
 		    } catch(e) {
                         process.exit(-1);
 		    }
 		    try { 
-		        fs.unlinkSync("./" + filename + ".result." + (i-1)+".dna");
+		        fs.unlinkSync("./" + filename + ".result." + (i-1)+".js.dna");
 		    } catch(e) {}
-		    lfilename = "./" + filename + ".result." + i+".dna";
+		    lfilename = "./" + filename + ".result." + i+".js.dna";
 		}
                 var file;
                 try {
